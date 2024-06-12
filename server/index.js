@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { storedata } from './controller/user.js';
-import { sendMail } from './controller/sendMail.js';
+// import { sendMail } from './controller/sendMail.js';
 
 
 const app = express();
@@ -26,7 +26,7 @@ const connectDB = async () => {
 };
 connectDB();
 
-app.post("/storedata",sendMail, storedata);
+app.post("/storedata", storedata);
 
 
 

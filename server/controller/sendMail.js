@@ -1,17 +1,37 @@
+import { text } from "express";
 import nodemailer from "nodemailer";
 
 
 const sendMail = async (req, res) => {
-    let testAccount = await nodemailer.createTestAccount();
 
+  try{
     const transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
+        host: process.env.HOST,
+        service:process.env.SERVICE,
+        port: Number(process.env.EMAIL_PORT),
+        secure: Boolean(process.env.SECURE),
         auth: {
-            user: 'achaltelmasre@gmail.com',
-            pass: 'enmlojwlueevmzym'
+            user: process.env.USER,
+            pass: process.env.PASS
         }
     });
+  
+      await transporter.sendMail({
+        from: process.env.USER,
+        to: email,
+        subject: subject,
+        text: text
+    
+      });
+
+      console.log("Email send successfully");
+
+  }
+  catch (error){
+     console.log("email not send");
+     console.log(error);
+  }
+  
 
     const info = await transporter.sendMail({
         from: '"jitendra" <jitendra@gmail.com>', // sender address
