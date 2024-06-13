@@ -1,53 +1,48 @@
-import { text } from "express";
-import nodemailer from "nodemailer";
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
 
+dotenv.config();
 
-const sendMail = async (req, res) => {
+const sendVerifyMail = async (name, email, user_id) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.gmail.com',
+            service: 'gmail',
+            port: 465,
+            secure: false,
+            auth: {
+                user: 'achaltelmasre@gmail.com',
+                pass: process.env.EMAIL_PASS
+            }
+        });
 
-  try{
-    const transporter = nodemailer.createTransport({
-        host: process.env.HOST,
-        service:process.env.SERVICE,
-        port: Number(process.env.EMAIL_PORT),
-        secure: Boolean(process.env.SECURE),
-        auth: {
-            user: process.env.USER,
-            pass: process.env.PASS
-        }
-    });
-  
-      await transporter.sendMail({
-        from: process.env.USER,
-        to: email,
-        subject: subject,
-        text: text
-    
-      });
+        const verificationLink = `http://localhost:3000/user/verify/${user_id}`;
+        const denyLink = `http://localhost:3000/user/deny/${user_id}`;
 
-      console.log("Email send successfully");
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: 'achaltelmasre@gmail.com',  // Replace with the email where you want to receive verification requests
+            subject: 'Verification Mail',
+            html: `<p>Hi! <br/> Can you allow <u><b>${name}</b></u> (${email}) to register their data?</p>
+                   <a href="${verificationLink}"><button>Allow</button></a>
+                   <a href="${denyLink}"><button>Deny</button></a>`
+        };
 
-  }
-  catch (error){
-     console.log("email not send");
-     console.log(error);
-  }
-  
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.log(error);
+            } else {
+                console.log("Email has been sent: ", info.response);
+            }
+        });
 
-    const info = await transporter.sendMail({
-        from: '"jitendra" <jitendra@gmail.com>', // sender address
-        to: "achaltelmasre@gmail.com", // list of receivers
-        subject: "Hello ✔", // Subject line
-        text: "Hello world?", // plain text body
-        html: "<b>Hello world?</b>", // html body
-      });
-    
-      console.log("Message sent: %s", info.messageId);
-       res.json(info);
+        console.log("Email sent successfully");
+        // console.log()
 
-        res.send("I am sending mail");
+    } catch (error) {
+        console.log("Email not sent");
+        console.log(error);
     }
+};
 
-   
-
-
-export {sendMail}
+export default sendVerifyMail;

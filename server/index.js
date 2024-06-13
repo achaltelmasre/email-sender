@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { storedata } from './controller/user.js';
+import { denymail, storedata, varifymail } from './controller/user.js';
 // import { sendMail } from './controller/sendMail.js';
 
 
@@ -27,6 +27,10 @@ const connectDB = async () => {
 connectDB();
 
 app.post("/storedata", storedata);
+
+app.get('/verify/:userId', varifymail);
+
+app.get('/deny/:userId', denymail);
 
 
 

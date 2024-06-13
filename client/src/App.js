@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState } from 'react';
 import axios from 'axios';
 
 import './App.css';
@@ -20,7 +20,7 @@ function App() {
          return 
       }
    
-      const response = await axios.post("/signup", {
+      const response = await axios.post("/storedata", {
             
               name:name,
               email:email,
@@ -32,20 +32,20 @@ function App() {
 
           alert(response?.data?.message);
 
-          if (response?.data?.success) {
-              alert(response?.data?.message);
-              window.location.href = "/login";
-          }
+          // if (response?.data?.success) {
+          //     alert(response?.data?.message);
+          //     window.location.href = "/login";
+          // }
   };
 
-  useEffect(() =>{
-    const storageUser = JSON.parse(localStorage.getItem("user") || '{}');
+  // useEffect(() =>{
+  //   const storageUser = JSON.parse(localStorage.getItem("user") || '{}');
 
-    // if (storageUser?.email) {
-    //    alert("You are already logged in!");
-    //    window.location.href = "/";
-    // }
-  }, [])
+  //   // if (storageUser?.email) {
+  //   //    alert("You are already logged in!");
+  //   //    window.location.href = "/";
+  //   // }
+  // }, [])
 
   return(
     <div className="signup">

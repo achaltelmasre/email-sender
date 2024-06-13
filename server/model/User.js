@@ -26,6 +26,10 @@ const UserSchema = new Schema({
     gender: {
         type:String,
         default: "prefer not to say",
+    },
+    verified: {
+        type: Boolean,
+        default: false
     }
 },
 {
