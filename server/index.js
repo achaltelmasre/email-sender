@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { denymail, storedata, varifymail } from './controller/user.js';
+import {  respond, storedata, getStatus } from './controller/user.js';
 // import { sendMail } from './controller/sendMail.js';
 
 
@@ -26,12 +26,9 @@ const connectDB = async () => {
 };
 connectDB();
 
-app.post("/storedata", storedata);
-
-app.get('/verify/:userId', varifymail);
-
-app.get('/deny/:userId', denymail);
-
+app.post('/user/storedata', storedata);
+app.get('/user/respond/:tempUserId', respond);
+app.get('/user/status/:tempUserId', getStatus);
 
 
 const PORT = process.env.PORT || 5000;

@@ -1,78 +1,26 @@
 import User from "../model/User.js";
-import nodemailer from 'nodemailer';
+import TemporaryUser from "../model/Tempt.js";
 import sendVerifyMail from "./sendMail.js";
-import dotenv from 'dotenv';
-dotenv.config();
-
-// For sending mail
-// const sendVerifyMail = async (name, email, user_id) => {
-//     try {
-//         const transporter = nodemailer.createTransport({
-//             host: 'smtp.gmail.com',
-//             service: 'gmail',
-//             port: 465,
-//             secure: false,
-//             auth: {
-//                 user: 'achaltelmasre@gmail.com',
-//                 pass: 'enmlojwlueevmzym' 
-//             }
-//         });
-
-//         const verificationLink = `http://localhost:3000/user/verify/${user_id}`;
-//         const denyLink = `http://localhost:3000/user/deny/${user_id}`;
-
-//         const mailOptions = {
-//             from: `${name}`,
-//             to: 'achaltelmasre@gmail.com',
-//             subject: 'Verification Mail',
-//             html: `<p>Hi! <br/> Can you allow <u><b>${name}</b></u> ${email} to register their data?</p>
-//                    <a href="${verificationLink}"><button>Allow</button></a>
-//                    <a href="${denyLink}"><button>Deny</button></a>`
-//         };
-
-//         transporter.sendMail(mailOptions, function(error, info) {
-//             if (error) {
-//                 console.log(error);
-//             } else {
-//                 console.log("Email has been sent: ", info.response);
-//             }
-//         });
-
-//         console.log("Email sent successfully");
-
-//     } catch (error) {
-//         console.log("Email not sent");
-//         console.log(error);
-//     }
-// };
 
 const storedata = async (req, res) => {
-    const {
+    const { name, email, password, mobile, address, gender } = req.body;
+
+    const tempUser = new TemporaryUser({
         name,
         email,
         password,
         mobile,
         address,
         gender
-    } = req.body;
-
-    const user = new User({
-        name: name,
-        email: email,
-        password: password,
-        mobile: mobile,
-        address: address,
-        gender: gender
     });
 
     try {
-        await sendVerifyMail(name, email, user._id); 
-        const savedUser = await user.save();
-       
+        const savedTempUser = await tempUser.save();
+        await sendVerifyMail(name, email, savedTempUser._id);
+
         res.json({
             success: true,
-            data: savedUser,
-            message: "User created successfully"
+            message: "Please wait for some minutes for verification."
         });
     } catch (e) {
         res.json({
@@ -82,34 +30,60 @@ const storedata = async (req, res) => {
     }
 };
 
-const varifymail = async (req, res) => {
-    const { userId } = req.params;
+const respond = async (req, res) => {
+    const { tempUserId } = req.params;
+    const { action } = req.query;
+
     try {
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+        const tempUser = await TemporaryUser.findById(tempUserId);
+        if (!tempUser) {
+            return res.status(404).json({ success: false, message: 'Temporary user not found' });
         }
-        user.verified = true;
-        await user.save();
-        res.json({ success: true, message: 'User verified successfully' });
+
+        if (action === 'allow') {
+            const user = new User({
+                name: tempUser.name,
+                email: tempUser.email,
+                password: tempUser.password,
+                mobile: tempUser.mobile,
+                address: tempUser.address,
+                gender: tempUser.gender,
+                verified: true
+            });
+
+            await user.save();
+            await TemporaryUser.findByIdAndRemove(tempUserId);
+
+            return res.send('<script>alert("User verified and data stored successfully."); window.location.href = "http://localhost:3000";</script>');
+        } else if (action === 'deny') {
+            await TemporaryUser.findByIdAndRemove(tempUserId);
+            return res.send('<script>alert("Permission denied and data removed successfully."); window.location.href = "http://localhost:3000";</script>');
+        } else {
+            return res.status(400).json({ success: false, message: 'Invalid action' });
+        }
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Verification failed' });
+        res.status(500).json({ success: false, message: 'Request processing failed' });
     }
 };
 
-const denymail = async (req, res) => {
-    const { userId } = req.params;
+const getStatus = async (req, res) => {
+    const { tempUserId } = req.params;
+
     try {
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+        const tempUser = await TemporaryUser.findById(tempUserId);
+        if (!tempUser) {
+            const user = await User.findOne({ tempUserId });
+            if (user) {
+                return res.json({ status: 'verified' });
+            } else {
+                return res.json({ status: 'denied' });
+            }
         }
-        await user.remove();
-        res.json({ success: true, message: 'User denied and removed successfully' });
+        res.json({ status: 'pending' });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Denial failed' });
+        res.status(500).json({ success: false, message: 'Request processing failed' });
     }
-}
+};
 
 
-export { storedata ,varifymail , denymail};
+export { storedata, respond, getStatus };

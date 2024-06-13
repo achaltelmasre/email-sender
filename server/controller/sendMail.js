@@ -3,41 +3,60 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const sendVerifyMail = async (name, email, user_id) => {
+const sendVerifyMail = async (name, email, tempUserId) => {
     try {
         const transporter = nodemailer.createTransport({
             host: 'smtp.gmail.com',
             service: 'gmail',
             port: 465,
-            secure: false,
+            secure: true,
             auth: {
                 user: 'achaltelmasre@gmail.com',
                 pass: process.env.EMAIL_PASS
             }
         });
 
-        const verificationLink = `http://localhost:3000/user/verify/${user_id}`;
-        const denyLink = `http://localhost:3000/user/deny/${user_id}`;
-
         const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: 'achaltelmasre@gmail.com',  // Replace with the email where you want to receive verification requests
+            from: email,
+            to:  process.env.EMAIL_USER,
             subject: 'Verification Mail',
-            html: `<p>Hi! <br/> Can you allow <u><b>${name}</b></u> (${email}) to register their data?</p>
-                   <a href="${verificationLink}"><button>Allow</button></a>
-                   <a href="${denyLink}"><button>Deny</button></a>`
+            html: `
+                <p>Hi!<br/> Can you allow <u><b>${name}</b></u> (${email}) to register their data?</p>
+                <button type="button" style="padding: 10px 20px; background-color: green; color: white; border: none; cursor: pointer;" onchange="handleAllow('${tempUserId}')">Allow</button>
+                <button type="button" style="padding: 10px 20px; background-color: red; color: white; border: none; cursor: pointer;" onchange="handleDeny('${tempUserId}')">Deny</button>
+
+                <script>
+                    async function handleAllow(tempUserId) {
+                        try {
+                            const response = await fetch('http://localhost:3000/user/respond/' + tempUserId + '?action=allow', {
+                                method: 'POST'
+                            });
+                            const result = await response.text();
+                            alert(result);
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Error processing request. Please try again later.');
+                        }
+                    }
+
+                    async function handleDeny(tempUserId) {
+                        try {
+                            const response = await fetch('http://localhost:3000/user/respond/' + tempUserId + '?action=deny', {
+                                method: 'POST'
+                            });
+                            const result = await response.text();
+                            alert(result);
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Error processing request. Please try again later.');
+                        }
+                    }
+                </script>
+            `
         };
 
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.log(error);
-            } else {
-                console.log("Email has been sent: ", info.response);
-            }
-        });
-
+        await transporter.sendMail(mailOptions);
         console.log("Email sent successfully");
-        // console.log()
 
     } catch (error) {
         console.log("Email not sent");
